@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	echo = "echo"
 	exit = "exit"
 )
 
@@ -24,13 +25,13 @@ func main() {
 			fmt.Println(err)
 		}
 
-		parsedInput := strings.Split(strings.Trim(input, "\n"), " ")
-		command := parsedInput[0]
-		args := parsedInput[1:]
+		command, args, _ := strings.Cut(strings.Trim(input, "\n"), " ")
 
 		switch command {
+		case echo:
+			fmt.Println(args)		
 		case exit:
-			code, err := strconv.Atoi(args[0])
+			code, err := strconv.Atoi(args)
 			if err != nil {
 				fmt.Println("not a valid exit code")
 				os.Exit(0)
