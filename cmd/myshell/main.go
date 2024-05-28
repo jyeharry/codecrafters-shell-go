@@ -4,26 +4,40 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"slices"
+	"strconv"
 	"strings"
 )
 
-var Commands = []string{}
+const (
+	exit = "exit"
+)
 
 func main() {
+	reader := bufio.NewReader(os.Stdin)
+
 	for {
 		fmt.Fprint(os.Stdout, "$ ")
 
-		reader := bufio.NewReader(os.Stdin)
 		// Wait for user input
-		command, err := reader.ReadString('\n')
-
+		input, err := (reader.ReadString('\n'))
 		if err != nil {
-			fmt.Println(err)	
-		} 
+			fmt.Println(err)
+		}
 
-		if !slices.Contains(Commands, command) {
-			fmt.Printf("%s: command not found\n", strings.Trim(command, "\n"))
+		parsedInput := strings.Split(strings.Trim(input, "\n"), " ")
+		command := parsedInput[0]
+		args := parsedInput[1:]
+
+		switch command {
+		case exit:
+			code, err := strconv.Atoi(args[0])
+			if err != nil {
+				fmt.Println("not a valid exit code")
+				os.Exit(0)
+			}
+			os.Exit(code)
+		default:
+			fmt.Printf("%s: command not found\n", strings.Trim(input, "\n"))
 		}
 	}
 }
