@@ -40,12 +40,14 @@ func handleCommand(input string) {
 	case echo:
 		fmt.Println(args)
 	case exit:
-		code, err := strconv.Atoi(args)
-		if err != nil {
-			fmt.Println("not a valid exit code")
+		if code, err := strconv.Atoi(args); err != nil {
+			if args != "" {
+				fmt.Println("not a valid exit code")
+			}
 			os.Exit(0)
+		} else {
+			os.Exit(code)		
 		}
-		os.Exit(code)
 	case typeCmd:
 		if slices.Contains(builtins, args) {
 			fmt.Printf("%s is a shell builtin\n", args)
@@ -55,17 +57,21 @@ func handleCommand(input string) {
 			fmt.Printf("%s not found\n", args)
 		}
 	default:
-		path, err := exec.LookPath(command)
-		if err != nil {
-			fmt.Printf("%s: command not found\n", strings.Trim(input, "\n"))
-			break
-		}
-		cmd := exec.Command(path, args)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		err = cmd.Run()
-		if err != nil {
-			fmt.Printf("Error running command: %s", err)
-		}
+		runExternalCommand(command, input, args)
+	}
+}
+
+func runExternalCommand(command string, input string, args string) {
+	path, err := exec.LookPath(command)
+	if err != nil {
+		fmt.Printf("%s: command not found\n", strings.Trim(input, "\n"))
+		return
+	}
+	cmd := exec.Command(path, args)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println(err)
 	}
 }
