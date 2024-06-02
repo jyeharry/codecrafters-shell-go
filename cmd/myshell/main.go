@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
+	"os/exec"
 	"slices"
 	"strconv"
 	"strings"
@@ -49,26 +49,23 @@ func handleCommand(input string) {
 	case typeCmd:
 		if slices.Contains(builtins, args) {
 			fmt.Printf("%s is a shell builtin\n", args)
-		} else if path, found := findExecutable(args); found {
+		} else if path, err := exec.LookPath(args); err == nil {
 			fmt.Println(path)
 		} else {
 			fmt.Printf("%s not found\n", args)
 		}
 	default:
-		fmt.Printf("%s: command not found\n", strings.Trim(input, "\n"))
-	}
-}
-
-func findExecutable(cmd string) (string, bool) {
-	osPath := os.Getenv("PATH")
-	paths := strings.Split(osPath, ":")
-
-	for _, path := range paths {
-		fullpath := filepath.Join(path, cmd)
-		if _, err := os.Stat(fullpath); err == nil {
-			return fullpath, true
+		path, err := exec.LookPath(command)
+		if err != nil {
+			fmt.Printf("%s: command not found\n", strings.Trim(input, "\n"))
+			break
+		}
+		cmd := exec.Command(path, args)
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		err = cmd.Run()
+		if err != nil {
+			fmt.Printf("Error running command: %s", err)
 		}
 	}
-
-	return "", false
 }
