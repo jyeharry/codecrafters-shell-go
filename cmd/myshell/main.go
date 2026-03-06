@@ -14,18 +14,18 @@ const (
 	echo    = "echo"
 	exit    = "exit"
 	typeCmd = "type"
+	pwd     = "pwd"
+	cd      = "cd"
 )
 
-var builtins = []string{echo, exit, typeCmd}
+var builtins = []string{echo, exit, typeCmd, pwd, cd}
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
-
 	for {
-		fmt.Fprint(os.Stdout, "$ ")
+		fmt.Print("$ ")
 
 		// Wait for user input
-		input, err := (reader.ReadString('\n'))
+		input, err := (bufio.NewReader(os.Stdin).ReadString('\n'))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -46,7 +46,7 @@ func handleCommand(input string) {
 			}
 			os.Exit(0)
 		} else {
-			os.Exit(code)		
+			os.Exit(code)
 		}
 	case typeCmd:
 		if slices.Contains(builtins, args) {
@@ -56,18 +56,26 @@ func handleCommand(input string) {
 		} else {
 			fmt.Printf("%s not found\n", args)
 		}
+	case pwd:
+		pwd, _ := os.Getwd()
+		fmt.Println(pwd)
+	case cd:
+		if err := os.Chdir(args); err != nil {
+			fmt.Printf("cd: %s: No such file or directory\n", args)
+		}
 	default:
 		runExternalCommand(command, input, args)
 	}
 }
 
 func runExternalCommand(command string, input string, args string) {
-	path, err := exec.LookPath(command)
+	argsSlice := strings.Split(args, " ")
+	_, err := exec.LookPath(command)
 	if err != nil {
 		fmt.Printf("%s: command not found\n", strings.Trim(input, "\n"))
 		return
 	}
-	cmd := exec.Command(path, args)
+	cmd := exec.Command(command, argsSlice...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	err = cmd.Run()
